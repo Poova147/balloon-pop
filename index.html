@@ -320,8 +320,7 @@ function makeBalloon() {
   const isBonus = Math.random() < 0.08;
   const r       = 24 + Math.random() * 14;
   const x       = r + Math.random() * (W - r*2);
-  // ⬇ Slower base speed: was 1.2, now 0.65
-  const speed   = 0.65 + level * 0.13 + Math.random() * 0.3;
+  const speed   = 1.2 + level * 0.25 + Math.random() * 0.5;
   const color   = isBonus ? BONUS_COLS[Math.floor(Math.random()*2)] : COLORS[Math.floor(Math.random()*COLORS.length)];
   const pts     = isBonus ? 50 : (r < 30 ? 20 : 10);
   return { x, y: H + r + 10, vy: -speed, vx: (Math.random()-.5)*0.4,
