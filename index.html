@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Balloon Pop! — Free online balloon shooter game. Click to pop colorful balloons, collect stars, level up and beat your high score!">
+<meta name="keywords" content="balloon pop game, free browser game, click game, casual game, balloon shooter">
+<meta property="og:title" content="Balloon Pop! — Free Balloon Shooter Game">
+<meta property="og:description" content="Pop colorful balloons before they escape! Free browser game.">
+<meta property="og:type" content="website">
+<title>Balloon Pop! — Free Balloon Shooter Game</title>
+
+<!-- ✅ ADSENSE STEP 1: Replace ca-pub-XXXXXXXXXXXXXXXX with your Publisher ID -->
+<!-- <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX" crossorigin="anonymous"></script> -->
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap');
+
+  :root {
+    --sky: #c9e8ff;
+    --sky2: #e8f4ff;
+    --cloud: rgba(255,255,255,0.75);
+    --ui-bg: rgba(255,255,255,0.85);
+    --ui-border: rgba(100,160,220,0.3);
+    --text-dark: #1a3a5c;
+    --text-mid: #3a6fa8;
+    --accent: #ff6b6b;
+    --gold: #f6c90e;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: var(--sky);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  /* ── AD SLOTS ── */
+  .ad-slot {
+    width: 100%;
+    max-width: 728px;
+    background: rgba(255,255,255,0.6);
+    border: 1px dashed rgba(100,160,220,0.4);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #7aabcc;
+    font-size: 11px;
+    letter-spacing: .06em;
+    font-family: monospace;
+  }
+  .ad-top    { height: 90px; margin: 10px auto 6px; }
+  .ad-mid    { height: 100px; margin: 8px auto; }
+  .ad-bottom { height: 90px; margin: 6px auto 10px; }
+
+  /* ── GAME WRAPPER ── */
+  #game-wrap {
+    width: 100%;
+    max-width: 680px;
+    padding: 0 8px;
+  }
+
+  /* ── HUD ── */
+  #hud {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+    margin: 8px 0;
+  }
+  .hc {
+    background: var(--ui-bg);
+    border: 1px solid var(--ui-border);
+    border-radius: 12px;
+    padding: 6px 10px;
+    text-align: center;
+    backdrop-filter: blur(4px);
+  }
+  .hl { font-size: 11px; color: var(--text-mid); font-weight: 700; letter-spacing: .05em; text-transform: uppercase; }
+  .hv { font-size: 20px; font-weight: 900; color: var(--text-dark); }
+
+  /* ── CANVAS ── */
+  #canvas-wrap {
+    position: relative;
+    border-radius: 18px;
+    overflow: hidden;
+    border: 2px solid rgba(255,255,255,0.8);
+    cursor: crosshair;
+    touch-action: none;
+  }
+  canvas { display: block; width: 100%; }
+
+  /* ── OVERLAYS ── */
+  .overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    background: rgba(180,220,255,0.88);
+    backdrop-filter: blur(6px);
+  }
+  .overlay h1 {
+    font-size: 2.4rem;
+    font-weight: 900;
+    color: var(--text-dark);
+    text-shadow: 0 2px 0 rgba(255,255,255,0.5);
+  }
+  .overlay p {
+    font-size: 14px;
+    color: var(--text-mid);
+    text-align: center;
+    max-width: 300px;
+    line-height: 1.6;
+    font-weight: 700;
+  }
+  .btn {
+    padding: 10px 28px;
+    border-radius: 50px;
+    border: none;
+    font-family: 'Nunito', sans-serif;
+    font-size: 15px;
+    font-weight: 900;
+    cursor: pointer;
+    transition: transform .1s;
+    letter-spacing: .02em;
+  }
+  .btn:active { transform: scale(.95); }
+  .btn-play   { background: #ff6b6b; color: #fff; }
+  .btn-play:hover { background: #ff5252; }
+  .btn-share  { background: rgba(255,255,255,0.8); color: var(--text-dark); font-size: 13px; padding: 8px 20px; }
+
+  #msg {
+    height: 22px;
+    text-align: center;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-mid);
+    margin: 4px 0;
+  }
+
+  /* ── RIPPLE CANVAS (effects) ── */
+  #fx-canvas {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+
+  /* ── PRIVACY FOOTER ── */
+  footer {
+    font-size: 11px;
+    color: var(--text-mid);
+    text-align: center;
+    padding: 8px;
+    opacity: 0.8;
+  }
+  footer a { color: var(--text-mid); }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 480px) {
+    .hv { font-size: 16px; }
+    .hl { font-size: 10px; }
+    .overlay h1 { font-size: 1.8rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- TOP AD -->
+<div class="ad-slot ad-top">
+  <!-- ✅ ADSENSE STEP 2: Replace this comment with your <ins> ad tag -->
+  Advertisement (728×90)
+  <!--
+  <ins class="adsbygoogle"
+    style="display:block"
+    data-ad-client="ca-pub-XXXXXXXXXXXXXXXX"
+    data-ad-slot="YOUR_AD_SLOT_ID"
+    data-ad-format="auto"
+    data-full-width-responsive="true"></ins>
+  <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+  -->
+</div>
+
+<div id="game-wrap">
+  <!-- HUD -->
+  <div id="hud">
+    <div class="hc"><div class="hl">Score</div><div class="hv" id="score">0</div></div>
+    <div class="hc"><div class="hl">Level</div><div class="hv" id="level">1</div></div>
+    <div class="hc"><div class="hl">Lives</div><div class="hv" id="lives">❤️❤️❤️</div></div>
+    <div class="hc"><div class="hl">Best</div><div class="hv" id="best">0</div></div>
+  </div>
+
+  <!-- GAME CANVAS -->
+  <div id="canvas-wrap">
+    <canvas id="c"></canvas>
+    <canvas id="fx-canvas"></canvas>
+
+    <!-- START OVERLAY -->
+    <div class="overlay" id="ov-start">
+      <div style="font-size:64px;line-height:1;animation:bob 1.8s ease-in-out infinite">🎈</div>
+      <h1>Balloon Pop!</h1>
+      <p>Click (or tap) balloons before they escape. Golden star balloons are worth 50 pts!</p>
+      <button class="btn btn-play" onclick="startGame()">▶ Play now</button>
+    </div>
+
+    <!-- GAME OVER OVERLAY -->
+    <div class="overlay" id="ov-gameover" style="display:none">
+      <div style="font-size:54px;line-height:1">💥</div>
+      <h1>Game Over!</h1>
+      <p id="go-stats">Score: 0 &nbsp;|&nbsp; Best: 0<br>Level reached: 1</p>
+      <button class="btn btn-play" onclick="startGame()">▶ Play again</button>
+      <button class="btn btn-share" onclick="shareScore()">📤 Share score</button>
+    </div>
+  </div>
+
+  <div id="msg"></div>
+
+  <!-- MID AD (shown between rounds) -->
+  <div class="ad-slot ad-mid">
+    <!-- ✅ ADSENSE STEP 3: Replace this comment with your rectangle <ins> tag -->
+    Advertisement (728×100)
+    <!--
+    <ins class="adsbygoogle"
+      style="display:block"
+      data-ad-client="ca-pub-XXXXXXXXXXXXXXXX"
+      data-ad-slot="YOUR_AD_SLOT_ID_2"
+      data-ad-format="rectangle"
+      data-full-width-responsive="true"></ins>
+    <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+    -->
+  </div>
+</div>
+
+<!-- BOTTOM AD -->
+<div class="ad-slot ad-bottom">
+  <!-- ✅ ADSENSE STEP 4: Replace with your bottom banner <ins> tag -->
+  Advertisement (728×90)
+  <!--
+  <ins class="adsbygoogle"
+    style="display:block"
+    data-ad-client="ca-pub-XXXXXXXXXXXXXXXX"
+    data-ad-slot="YOUR_AD_SLOT_ID_3"
+    data-ad-format="auto"
+    data-full-width-responsive="true"></ins>
+  <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+  -->
+</div>
+
+<footer>
+  &copy; 2025 Balloon Pop &nbsp;|&nbsp; <a href="privacy.html">Privacy Policy</a> &nbsp;|&nbsp; Free browser game
+</footer>
+
+<style>
+@keyframes bob {
+  0%,100% { transform: translateY(0) rotate(-5deg); }
+  50%      { transform: translateY(-12px) rotate(5deg); }
+}
+</style>
+
+<script>
+const canvas = document.getElementById('c');
+const fx     = document.getElementById('fx-canvas');
+const ctx    = canvas.getContext('2d');
+const fctx   = fx.getContext('2d');
+
+const W = 660, H = 480;
+canvas.width  = W; canvas.height  = H;
+fx.width      = W; fx.height      = H;
+
+/* ── AUDIO ── */
+const AC = new (window.AudioContext || window.webkitAudioContext)();
+function snd(freq, dur, type='sine', vol=0.09) {
+  try {
+    const o = AC.createOscillator(), g = AC.createGain();
+    o.connect(g); g.connect(AC.destination);
+    o.type = type; o.frequency.value = freq;
+    g.gain.setValueAtTime(vol, AC.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, AC.currentTime + dur);
+    o.start(); o.stop(AC.currentTime + dur);
+  } catch(e) {}
+}
+function popSound()   { snd(280,.04,'sawtooth',.13); setTimeout(()=>snd(560,.09,'sine',.07),35); }
+function bonusSound() { [660,880,1100].forEach((f,i)=>setTimeout(()=>snd(f,.1,'sine',.09),i*60)); }
+function missSound()  { snd(140,.25,'sawtooth',.09); }
+function lvlSound()   { [440,550,660,880].forEach((f,i)=>setTimeout(()=>snd(f,.14,'sine',.08),i*75)); }
+function overSound()  { [300,250,200,150].forEach((f,i)=>setTimeout(()=>snd(f,.22,'sawtooth',.09),i*100)); }
+
+/* ── COLOURS ── */
+const COLORS      = ['#ff6b6b','#4dabf7','#69db7c','#fcc419','#f783ac','#845ef7','#20c997','#ff922b'];
+const BONUS_COLS  = ['#FFD700','#ff6ef7'];
+
+/* ── STATE ── */
+let balloons=[], particles=[], ripples=[], scorePopups=[], clouds=[];
+let score=0, lives=3, level=1, best=0, running=false, raf=null;
+let spawnTimer=0, frameCount=0;
+
+/* ── PERSIST ── */
+function loadBest() { try { best=parseInt(localStorage.getItem('bpop_best')||'0'); } catch(e){} }
+function saveBest() { try { localStorage.setItem('bpop_best', best); } catch(e){} }
+
+/* ── CLOUD INIT ── */
+function initClouds() {
+  clouds = Array.from({length:6}, ()=>({
+    x: Math.random()*W,
+    y: 30+Math.random()*100,
+    r: 40+Math.random()*40,
+    vx: 0.12+Math.random()*0.15,
+    alpha: 0.55+Math.random()*0.3
+  }));
+}
+
+/* ── BALLOON FACTORY ── */
+function makeBalloon() {
+  const isBonus = Math.random() < 0.08;
+  const r       = 24 + Math.random() * 14;
+  const x       = r + Math.random() * (W - r*2);
+  // ⬇ Slower base speed: was 1.2, now 0.65
+  const speed   = 0.65 + level * 0.13 + Math.random() * 0.3;
+  const color   = isBonus ? BONUS_COLS[Math.floor(Math.random()*2)] : COLORS[Math.floor(Math.random()*COLORS.length)];
+  const pts     = isBonus ? 50 : (r < 30 ? 20 : 10);
+  return { x, y: H + r + 10, vy: -speed, vx: (Math.random()-.5)*0.4,
+           radius: r, color, pts, isBonus, wobble: Math.random()*Math.PI*2, alpha:1 };
+}
+
+/* ── PARTICLE BURST ── */
+function burst(x, y, color, isBonus) {
+  const count = isBonus ? 18 : 12;
+  for(let i=0;i<count;i++){
+    const angle = (i/count)*Math.PI*2 + Math.random()*.3;
+    const speed = isBonus ? 3+Math.random()*5 : 2+Math.random()*4;
+    particles.push({
+      x, y,
+      vx: Math.cos(angle)*speed,
+      vy: Math.sin(angle)*speed,
+      r: isBonus ? 5+Math.random()*4 : 3+Math.random()*4,
+      color: isBonus ? (Math.random()<.5?'#FFD700':'#fff') : color,
+      life: 1,
+      rot: Math.random()*Math.PI*2,
+      shape: Math.random()<.4 ? 'star' : 'circle'
+    });
+  }
+}
+
+/* ── RIPPLE ── */
+function addRipple(x, y, color) {
+  ripples.push({ x, y, r: 0, maxR: 55, color, life: 1 });
+}
+
+/* ── SCORE POPUP ── */
+function addPopup(x, y, pts) {
+  scorePopups.push({ x, y, pts, life: 1, vy: -1.8 });
+}
+
+/* ── DRAW HELPERS ── */
+function drawStar(ctx, cx, cy, r, color) {
+  ctx.save();
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  for(let i=0;i<5;i++){
+    const a = (i*4*Math.PI/5) - Math.PI/2;
+    const b = (i*4*Math.PI/5 + 2*Math.PI/5) - Math.PI/2;
+    i===0 ? ctx.moveTo(cx+Math.cos(a)*r, cy+Math.sin(a)*r)
+           : ctx.lineTo(cx+Math.cos(a)*r, cy+Math.sin(a)*r);
+    ctx.lineTo(cx+Math.cos(b)*(r*.4), cy+Math.sin(b)*(r*.4));
+  }
+  ctx.closePath(); ctx.fill(); ctx.restore();
+}
+
+function drawBalloon(b) {
+  ctx.save();
+  ctx.globalAlpha = b.alpha;
+  const wobX = Math.sin(b.wobble) * 3;
+
+  /* body */
+  ctx.beginPath();
+  ctx.ellipse(b.x+wobX, b.y, b.radius*0.84, b.radius, 0, 0, Math.PI*2);
+  ctx.fillStyle = b.color;
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(0,0,0,0.10)';
+  ctx.lineWidth = 1.2;
+  ctx.stroke();
+
+  /* shine */
+  ctx.beginPath();
+  ctx.ellipse(b.x+wobX - b.radius*.26, b.y - b.radius*.28, b.radius*.22, b.radius*.16, -.5, 0, Math.PI*2);
+  ctx.fillStyle = 'rgba(255,255,255,0.48)';
+  ctx.fill();
+
+  /* knot */
+  ctx.beginPath();
+  ctx.arc(b.x+wobX, b.y+b.radius-.5, 3.5, 0, Math.PI*2);
+  ctx.fillStyle = b.color;
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(0,0,0,0.15)';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
+  /* string */
+  ctx.beginPath();
+  ctx.moveTo(b.x+wobX, b.y+b.radius+3);
+  ctx.quadraticCurveTo(b.x+wobX+9, b.y+b.radius+18, b.x+wobX+2, b.y+b.radius+34);
+  ctx.strokeStyle = 'rgba(0,0,0,0.18)';
+  ctx.lineWidth = 1.1;
+  ctx.stroke();
+
+  /* bonus star icon */
+  if(b.isBonus) {
+    ctx.fillStyle = '#fff';
+    ctx.font = `bold ${Math.floor(b.radius*.55)}px Nunito,sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('★', b.x+wobX, b.y+1);
+  }
+
+  ctx.restore();
+}
+
+function drawBg() {
+  /* sky */
+  ctx.fillStyle = '#b8dcff';
+  ctx.fillRect(0,0,W,H);
+
+  /* clouds */
+  clouds.forEach(cl=>{
+    ctx.save();
+    ctx.globalAlpha = cl.alpha;
+    ctx.fillStyle = '#fff';
+    ctx.beginPath();
+    ctx.arc(cl.x, cl.y, cl.r, 0, Math.PI*2);
+    ctx.arc(cl.x+cl.r*.7, cl.y-cl.r*.2, cl.r*.7, 0, Math.PI*2);
+    ctx.arc(cl.x-cl.r*.6, cl.y-cl.r*.1, cl.r*.6, 0, Math.PI*2);
+    ctx.fill();
+    ctx.restore();
+    cl.x += cl.vx;
+    if(cl.x > W+cl.r*2) cl.x = -cl.r*2;
+  });
+
+  /* ground strip */
+  ctx.fillStyle = '#a8d8a8';
+  ctx.fillRect(0, H-18, W, 18);
+  ctx.fillStyle = '#7ec87e';
+  ctx.fillRect(0, H-18, W, 5);
+}
+
+/* ── EFFECTS LAYER (fx-canvas) ── */
+function drawFX() {
+  fctx.clearRect(0,0,W,H);
+
+  /* ripples */
+  ripples.forEach(rp=>{
+    fctx.save();
+    fctx.globalAlpha = rp.life * 0.5;
+    fctx.beginPath();
+    fctx.arc(rp.x, rp.y, rp.r, 0, Math.PI*2);
+    fctx.strokeStyle = rp.color;
+    fctx.lineWidth = 3;
+    fctx.stroke();
+    rp.r   += 3.5;
+    rp.life -= 0.045;
+    fctx.restore();
+  });
+  ripples = ripples.filter(r=>r.life>0);
+
+  /* particles */
+  particles.forEach(p=>{
+    fctx.save();
+    fctx.globalAlpha = p.life;
+    if(p.shape==='star') {
+      drawStarFX(fctx, p.x, p.y, p.r, p.color);
+    } else {
+      fctx.beginPath();
+      fctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+      fctx.fillStyle = p.color;
+      fctx.fill();
+    }
+    fctx.restore();
+    p.x    += p.vx; p.y += p.vy;
+    p.vy   += 0.12;
+    p.vx   *= 0.97;
+    p.r    *= 0.97;
+    p.life -= 0.032;
+  });
+  particles = particles.filter(p=>p.life>0);
+
+  /* score popups */
+  scorePopups.forEach(sp=>{
+    fctx.save();
+    fctx.globalAlpha = sp.life;
+    fctx.fillStyle = sp.pts>=50 ? '#c07800' : '#1a5fa8';
+    fctx.font = `bold ${sp.pts>=50?20:15}px Nunito,sans-serif`;
+    fctx.textAlign = 'center';
+    fctx.fillText('+'+sp.pts, sp.x, sp.y);
+    fctx.restore();
+    sp.y += sp.vy;
+    sp.life -= 0.025;
+  });
+  scorePopups = scorePopups.filter(s=>s.life>0);
+}
+
+function drawStarFX(c, cx, cy, r, color) {
+  c.fillStyle = color;
+  c.beginPath();
+  for(let i=0;i<5;i++){
+    const a = (i*4*Math.PI/5)-Math.PI/2;
+    const b = (i*4*Math.PI/5+2*Math.PI/5)-Math.PI/2;
+    i===0 ? c.moveTo(cx+Math.cos(a)*r, cy+Math.sin(a)*r)
+           : c.lineTo(cx+Math.cos(a)*r, cy+Math.sin(a)*r);
+    c.lineTo(cx+Math.cos(b)*(r*.4), cy+Math.sin(b)*(r*.4));
+  }
+  c.closePath(); c.fill();
+}
+
+/* ── HUD RENDER ── */
+function updateHUD() {
+  document.getElementById('score').textContent = score;
+  document.getElementById('level').textContent = level;
+  document.getElementById('best').textContent  = best;
+  document.getElementById('lives').textContent = '❤️'.repeat(Math.max(0,lives));
+}
+
+/* ── MSG ── */
+let msgTimer;
+function showMsg(txt, dur=1800) {
+  const m = document.getElementById('msg');
+  m.textContent = txt;
+  clearTimeout(msgTimer);
+  msgTimer = setTimeout(()=>m.textContent='', dur);
+}
+
+/* ── MAIN LOOP ── */
+function loop() {
+  if(!running) return;
+  frameCount++;
+  ctx.clearRect(0,0,W,H);
+  drawBg();
+
+  /* spawn */
+  spawnTimer++;
+  const rate = Math.max(55, 110 - level*7);
+  if(spawnTimer >= rate) { balloons.push(makeBalloon()); spawnTimer=0; }
+
+  /* update + draw balloons */
+  balloons.forEach(b=>{
+    b.wobble += 0.055;
+    b.y      += b.vy;
+    b.x      += b.vx;
+    if(b.x < b.radius)   b.vx = Math.abs(b.vx);
+    if(b.x > W-b.radius) b.vx = -Math.abs(b.vx);
+    drawBalloon(b);
+  });
+
+  /* check escaped */
+  const escaped = balloons.filter(b=>b.y < -b.radius*2 - 40);
+  escaped.forEach(()=>{
+    lives--;
+    missSound();
+    updateHUD();
+    if(lives<=0) { endGame(); return; }
+    showMsg('Missed! ' + lives + ' ' + (lives===1?'life':'lives') + ' left');
+  });
+  balloons = balloons.filter(b=>b.y >= -b.radius*2 - 40);
+
+  /* level up */
+  const threshold = level * 120;
+  if(score >= threshold) {
+    level++;
+    lvlSound();
+    showMsg('Level ' + level + '! Speed up! 🚀', 2400);
+    updateHUD();
+  }
+
+  drawFX();
+  raf = requestAnimationFrame(loop);
+}
+
+/* ── INPUT ── */
+function handlePointer(e) {
+  e.preventDefault();
+  AC.resume();
+  if(!running) { startGame(); return; }
+
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = W / rect.width;
+  const scaleY = H / rect.height;
+  const src = e.touches ? e.touches[0] : e;
+  const sx = (src.clientX - rect.left) * scaleX;
+  const sy = (src.clientY - rect.top)  * scaleY;
+
+  let hit = false;
+  for(let i=balloons.length-1; i>=0; i--) {
+    const b = balloons[i];
+    const dx = sx - b.x, dy = sy - b.y;
+    if(Math.sqrt(dx*dx+dy*dy) < b.radius + 4) {
+      score += b.pts;
+      if(score > best) { best = score; saveBest(); }
+      burst(b.x, b.y, b.color, b.isBonus);
+      addRipple(b.x, b.y, b.color);
+      addPopup(b.x, b.y - b.radius, b.pts);
+      if(b.isBonus) bonusSound(); else popSound();
+      balloons.splice(i,1);
+      updateHUD();
+      hit = true;
+      break;
+    }
+  }
+
+  /* miss ripple */
+  if(!hit) {
+    addRipple(sx, sy, 'rgba(255,80,80,0.7)');
+    fctx.save();
+    fctx.strokeStyle = 'rgba(255,80,80,0.5)';
+    fctx.lineWidth = 2;
+    fctx.beginPath();
+    fctx.moveTo(sx-10,sy-10); fctx.lineTo(sx+10,sy+10);
+    fctx.moveTo(sx+10,sy-10); fctx.lineTo(sx-10,sy+10);
+    fctx.stroke();
+    fctx.restore();
+    setTimeout(()=>fctx.clearRect(sx-15,sy-15,30,30),300);
+  }
+}
+
+canvas.addEventListener('click',       handlePointer);
+canvas.addEventListener('touchstart',  handlePointer, {passive:false});
+fx.addEventListener('click',           handlePointer);
+fx.addEventListener('touchstart',      handlePointer, {passive:false});
+
+/* ── GAME FLOW ── */
+function startGame() {
+  AC.resume();
+  score=0; lives=3; level=1;
+  balloons=[]; particles=[]; ripples=[]; scorePopups=[];
+  spawnTimer=0; frameCount=0; running=true;
+  document.getElementById('ov-start').style.display    = 'none';
+  document.getElementById('ov-gameover').style.display = 'none';
+  loadBest(); updateHUD();
+  initClouds();
+  loop();
+}
+
+function endGame() {
+  running=false;
+  cancelAnimationFrame(raf);
+  overSound();
+  if(score>best) { best=score; saveBest(); }
+  updateHUD();
+  document.getElementById('go-stats').innerHTML =
+    `Score: <strong>${score}</strong> &nbsp;|&nbsp; Best: <strong>${best}</strong><br>Level reached: ${level}`;
+  document.getElementById('ov-gameover').style.display = 'flex';
+  showMsg('');
+}
+
+function shareScore() {
+  const txt = `I scored ${score} in Balloon Pop! (Level ${level}) 🎈 Can you beat me?`;
+  if(navigator.share) {
+    navigator.share({ title:'Balloon Pop!', text: txt, url: location.href });
+  } else {
+    navigator.clipboard.writeText(txt + ' ' + location.href)
+      .then(()=>showMsg('Score copied to clipboard!'));
+  }
+}
+
+/* ── INIT ── */
+loadBest(); updateHUD(); initClouds();
+
+/* Draw a static sky on load */
+ctx.fillStyle = '#b8dcff';
+ctx.fillRect(0,0,W,H);
+</script>
+
+</body>
+</html>
